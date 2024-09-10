@@ -1,8 +1,7 @@
 const { test, describe } = require('node:test')
 const assert = require('node:assert')
+const _ = require('lodash')
 const listHelper = require('../utils/list_helper')
-
-const totalLikes = require('../utils/list_helper').totalLikes
 
 const listWithOneBlog = [
   {
@@ -58,28 +57,65 @@ const listWithManyBlogs = [
   }  
 ]
 
-/*
+
+// 4.3 test that dummy function returns 1 
 test('dummy returns one', () => {
-        const blogs = []
-        const result = listHelper.dummy(blogs)
+        const result = listHelper.dummy([])
         assert.strictEqual(result, 1)
       })
 
-*/ 
+
+// 4.4 tests for blogs 
 describe('total likes', () => {
 
-  test('of empty list is zero'), () => {
+  test('of empty list is zero', () => {
     const result = listHelper.totalLikes([])
     assert.strictEqual(result,0)
-  }
-  test('when list has only one blog equals the likes of that'), () => {
+  })
+  test('when list has only one blog equals the likes of that', () => {
     const result = listHelper.totalLikes(listWithOneBlog)
-    assert.strictEqual(result,7)
-  }
-  test('of a bigger list is calculated right'), () => {
+    assert.strictEqual(result,5)
+  })
+  test('of a bigger list is calculated right', () => {
     const result = listHelper.totalLikes(listWithManyBlogs)
-    assert.strictEqual(result,32)
-  }
+    assert.strictEqual(result,36)
+  })
+})
+
+// 4.5. more tests for blogs
+describe('favorite blog', () => {
+  test('blog with most likes', () => {
+    const result = listHelper.favoriteBlog(listWithManyBlogs)
+    const mostLiked = 
+    {
+      title: "Canonical string reduction",
+      author: "Edsger W. Dijkstra",
+      likes: 12
+    }
+    assert.deepStrictEqual(result, mostLiked)
+  })
+})
+
+// 4.6. more tests, installed lodash
+// mostBlogs figures out the writer with most blogs in the parameter array
+describe('writer with most blogs', () => {
+  test('most blogs', () => {
+    const result = listHelper.mostBlogs(listWithManyBlogs)
+    const correctResult = {
+        author: "Robert C. Martin",
+        blogs: 3
+      }
+    assert.deepStrictEqual(result, correctResult)
+  })
+  test('most likes for author', () => {
+    const result = listHelper.mostLikes(listWithManyBlogs)
+    const correctResult = 
+    {
+      author: "Edsger W. Dijkstra",
+      likes: 17
+    }
+    assert.deepStrictEqual(result, correctResult)
+  })
 })
 
 

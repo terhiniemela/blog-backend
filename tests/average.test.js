@@ -1,8 +1,6 @@
 const { test, describe } = require('node:test')
 const assert = require('node:assert')
 
-// ...
-
 const average = require('../utils/for_testing').average
 
 describe('average', () => {
