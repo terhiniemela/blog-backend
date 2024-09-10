@@ -31,7 +31,7 @@ blogRouter.post('/', (request, response, next) => {
   
     blog.save()
       .then(savedBlog => {
-        response.json(savedBlog)
+        response.status(201).json(savedBlog)
       })
       .catch(error => next(error))
   })

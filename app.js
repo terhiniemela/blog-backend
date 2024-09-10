@@ -6,6 +6,7 @@ const blogRouter = require('./controllers/blogs')
 const middleware = require('./utils/middleware')
 const logger = require('./utils/logger.js')
 const mongoose = require('mongoose')
+var _ = require('lodash')
 
 mongoose.set('strictQuery', false)
 

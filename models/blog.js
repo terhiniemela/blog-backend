@@ -1,7 +1,7 @@
 // module for using mongoose db
 const mongoose = require('mongoose')
 
-const blogSchema = mongoose.Schema({
+const blogSchema = new mongoose.Schema({
     title: String,
     author: String,
     url: String,
