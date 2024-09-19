@@ -95,7 +95,24 @@ test('post request without likes argument has the value 0 for likes', async() =>
   assert.strictEqual(response.body.likes, 0)
 })
 
+// 4.12 post request should return 400 if title or url is missing
+test('post should return 400 if title or url missing', async() => {
+
+    const testBlogWithoutTitle = {
+      author: "Juje"
+    }
+
+    const response = await api 
+      .post('/api/blogs')
+      .send(testBlogWithoutTitle)
+      .expect('Content-Type', /application\/json/)
+
+  assert.strictEqual(response.status, 400)
 })
+
+})
+
+
 
 after(async () => {
   await mongoose.connection.close()
