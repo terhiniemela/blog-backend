@@ -7,7 +7,7 @@ const listWithOneBlog = [
   {
   id: '5a422aa71b54a676234d17f8',
   title: 'Go To Statement Considered Harmful',
-  author: 'Edsger',
+  author: 'Edsger W. Dijkstra',
   url: 'www.google.com',
   likes: 5,
 }]
