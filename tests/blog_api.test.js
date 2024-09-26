@@ -4,32 +4,16 @@ const supertest = require('supertest')
 const assert = require('node:assert')
 const app = require('../app')
 const Blog = require('../models/blog')
+const logger = require('../utils/logger')
+const helper = require('../utils/test_helper')
 
 const api = supertest(app)
 
-// initial blogs ready for the db
-const initialBlogs = [
-  {
-      "title": "showering for all",
-      "author": "dandruff",
-      "url": "www.google.com",
-      "likes": 54646
-  },
-  {
-      "title": "Shrimp yelling at me that Grumbles asked for no tomato on his burger",
-      "author": "haley",
-      "url": "https://x.com/feederofcats/status/1820256929471676663?t=KEeoIVEDZmAnrJS4PVii1A&s=19",
-      "likes": 10000000
-  }
-]
-
 // let's empty the db first and then add the initial blogs to it
+// edit: better format for adding many blogs
 beforeEach(async () => {
   await Blog.deleteMany({})
-  let blogObject = new Blog(initialBlogs[0])
-  await blogObject.save()
-  blogObject = new Blog(initialBlogs[1])
-  await blogObject.save()
+  await Blog.insertMany(helper.initialBlogs)
 })
 
 describe('blog api tests', () => {
@@ -37,7 +21,7 @@ describe('blog api tests', () => {
   // 4.8 test that there are two tests in the db after initializing it
   test('correct number of blogs', async () => {
     const response = await api.get('/api/blogs')
-    assert.strictEqual(response.body.length, initialBlogs.length)
+    assert.strictEqual(response.body.length, helper.initialBlogs.length)
   })
 
   // 4.9 test checks if the identifier property is 'id' instead of default '_id
@@ -70,7 +54,7 @@ describe('blog api tests', () => {
     const response = await api.get('/api/blogs')
 
     // let's check that there's a new blog post in db
-    assert.strictEqual(response.body.length, initialBlogs.length+1)
+    assert.strictEqual(response.body.length, helper.initialBlogs.length+1)
   })
 
 // 4.11. if there is no likes value in the post request, it should be zero.
@@ -83,6 +67,8 @@ test('post request without likes argument has the value 0 for likes', async() =>
     author: "Clee",
     url: "http://www.ggoogle.com/cleememoir"
   }
+
+  logger.info(newTestBlog)
 
   // post blog to db
  const response = await api
@@ -110,9 +96,49 @@ test('post should return 400 if title or url missing', async() => {
   assert.strictEqual(response.status, 400)
 })
 
+// 4.13 test that blog can be deleted
+test('test that blog can be deleted', async () => {
+  const blogsAtStart = await helper.blogsInDb()
+  const blogToDelete = blogsAtStart[0]
+
+  await api 
+    .delete(`/api/blogs/${blogToDelete.id}`)
+    .expect(204)
+  
+  const blogsAtEnd = await helper.blogsInDb()
+
+  const contents = blogsAtEnd.map(r => r.title)
+  assert(!contents.includes(blogToDelete.title))
+
+  assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length-1)
 })
 
+// 4.14 test that you can edit a blog
+test('test that blog can be edited', async () => {
+  const blogsAtStart = await helper.blogsInDb()
+  const blogToEdit = blogsAtStart[0]
 
+  const replacingBlog = {
+    "title": "sleeping in a cat condo",
+    "author": "dandruff",
+    "url": "www.google.com",
+    "likes": 1022222
+}
+
+ const response =  await api
+    .put(`/api/blogs/${blogToEdit.id}`)
+    .send(replacingBlog)
+
+  const blogsAtEnd = await helper.blogsInDb()
+
+  const contents = blogsAtEnd.map(r => r.title)
+  assert(contents.includes(replacingBlog.title))
+
+  assert.strictEqual(response.status, 200)
+
+})
+
+})
 
 after(async () => {
   await mongoose.connection.close()
