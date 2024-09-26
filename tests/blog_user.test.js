@@ -62,6 +62,45 @@ describe('when there is initially one user at db', () => {
 
     assert.strictEqual(usersAtEnd.length, usersAtStart.length)
   })
+
+  test('creating an user with too short password should fail', async () => {
+    const usersAtStart = await helper.usersInDb()
+
+    const newUser = {
+        username: 'uniqueUser3585',
+        name: 'uniqueName385',
+        password: 'u'
+    }
+
+    const result = await api
+        .post('/api/users')
+        .send(newUser)
+        .expect(400)
+        .expect('Content-Type', /application\/json/)
+
+    const usersAtEnd = await helper.usersInDb()
+    assert(result.body.error.includes('password too short'))
+    assert.strictEqual(usersAtEnd.length, usersAtStart.length)
+
+  })
+  test('post request without username and password should fail', async () => {
+    const usersAtStart = await helper.usersInDb()
+
+    const newUser = {
+        name: 'uniqueName'
+    }
+    const result = await api
+        .post('/api/users')
+        .send(newUser)
+        .expect(400)
+        .expect('Content-Type', /application\/json/)
+
+        const usersAtEnd = await helper.usersInDb()
+
+    assert(result.body.error.includes('username/password missing'))
+    assert.strictEqual(usersAtEnd.length, usersAtStart.length)
+  })
+
 })
 
 after(async () => {
