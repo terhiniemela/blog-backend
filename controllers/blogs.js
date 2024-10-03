@@ -2,6 +2,15 @@ const blogRouter = require('express').Router()
 const Blog = require('../models/blog')
 const User = require('../models/user')
 const logger = require('../utils/logger')
+const jwt = require('jsonwebtoken')
+
+const getTokenFrom = request => {
+  const authorization = request.get('authorization')
+  if (authorization && authorization.startsWith('Bearer ')) {
+    return authorization.replace('Bearer ', '')
+  }
+  return null
+}
 
 // reformatted to async
 blogRouter.get('/', async (request, response) => {
@@ -28,13 +37,19 @@ blogRouter.get('/:id', async (request, response) => {
 blogRouter.post('/', async (request, response, next) => {
     const body = request.body
 
+    const decodedToken = jwt.verify(getTokenFrom(request), process.env.SECRET)
+    if (!decodedToken.id) {
+      return response.status(401).json({ error: 'token invalid' })
+    }
+    const user = await User.findById(decodedToken.id)
+
     if ((body.title || body.url) === undefined ) {
       return response.status(400).json({ error: 'content missing' })
     }
   
     // const user = await User.findById(body.userId)
     // temporary way to assign user for a blog
-    const user = await User.findOne({})
+    const user1 = await User.findOne({})
     //const id = new mongoose.Types.ObjectId(user._id)
 
     //logger.info(id)
@@ -44,7 +59,7 @@ blogRouter.post('/', async (request, response, next) => {
         author: body.author,
         url: body.url,
         likes: body.likes,
-        user: user._id
+        user: user1._id
     })
   
     const savedBlog = await blog.save()
