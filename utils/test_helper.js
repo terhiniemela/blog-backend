@@ -4,18 +4,22 @@ const User = require('../models/user')
 // initial blogs ready for the db
 const initialBlogs = [
     {
+        "id": "670027a1e1b7bc2c6abb0281",
         "title": "showering for all",
         "author": "dandruff",
         "url": "www.google.com",
-        "likes": 54646
+        "likes": 54646,
+        "user": "6700275ae1b7bc2c6abb027d"
     },
     {
         "title": "Shrimp yelling at me that Grumbles asked for no tomato on his burger",
         "author": "haley",
         "url": "https://x.com/feederofcats/status/1820256929471676663?t=KEeoIVEDZmAnrJS4PVii1A&s=19",
-        "likes": 10000000
+        "likes": 10000000,
+        "user": "6700275ae1b7bc2c6abb027d"
     }
   ]
+
 
 const nonExistingId = async () => {
     const blog = new Blog({"title":"asd", "author":"asdf", "url":"www.google.com"})
@@ -35,5 +39,5 @@ const usersInDb = async () => {
   }
 
 module.exports = {
-    initialBlogs, nonExistingId, blogsInDb, usersInDb
+    initialBlogs, nonExistingId, blogsInDb, usersInDb,
 }

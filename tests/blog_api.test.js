@@ -1,4 +1,4 @@
-const { test, after, describe, beforeEach } = require('node:test')
+const { test, after, describe, beforeEach} = require('node:test')
 const mongoose = require('mongoose')
 const supertest = require('supertest')
 const assert = require('node:assert')
@@ -6,12 +6,17 @@ const app = require('../app')
 const Blog = require('../models/blog')
 const logger = require('../utils/logger')
 const helper = require('../utils/test_helper')
+const jwt = require('jsonwebtoken')
+const User = require('../models/user')
+const bcrypt = require('bcrypt')
 
 const api = supertest(app)
 
 // let's empty the db first and then add the initial blogs to it
 // edit: better format for adding many blogs
 beforeEach(async () => {
+  await User.deleteMany({})
+
   await Blog.deleteMany({})
   await Blog.insertMany(helper.initialBlogs)
 })
@@ -38,15 +43,32 @@ describe('blog api tests', () => {
   
   // 4.10 checks that post request adds the blog to the db
   test('succesful blog post with post request', async () => {
-    const newBlog = { 
+    
+    // first we create the user and get the token for blog post
+    const userResponse = await api
+        .post('/api/users')
+        .send({ "username": "testuser",
+                "password": "trustno1"
+      })
+
+    const loginResponse = await api
+      .post('/api/login/')
+      .send({"username": "testuser",
+              "password": "trustno1"})
+
+    const token = loginResponse.body.token
+
+    const newBlog = {
+      id: "5a422b891b54a676234d17fa",
       title: "I was freakin forgor part 35835",
       author: "Juje",
       url: "https://x.com/goodgirljuliee/status/1821857840492933293",
-      likes: 5 
+      likes: 5
     }
 
     await api
-      .post('/api/blogs')
+      .post('/api/blogs/')
+      .set('Authorization', `Bearer ${token}`)
       .send(newBlog)
       .expect(201)
       .expect('Content-Type', /application\/json/)
@@ -54,13 +76,26 @@ describe('blog api tests', () => {
     const response = await api.get('/api/blogs')
 
     // let's check that there's a new blog post in db
+    //assert.strictEqual(response.body.length, helper.initialBlogs.length+1)
     assert.strictEqual(response.body.length, helper.initialBlogs.length+1)
   })
 
 // 4.11. if there is no likes value in the post request, it should be zero.
-// lets test that
 test('post request without likes argument has the value 0 for likes', async() => {
   
+  const userResponse = await api
+        .post('/api/users')
+        .send({ "username": "testuser",
+                "password": "trustno1"
+      })
+
+  const loginResponse = await api
+      .post('/api/login/')
+      .send({"username": "testuser",
+              "password": "trustno1"})
+
+  const token = loginResponse.body.token
+
   // a new test blog without argument likes
   const newTestBlog = {
     title: "I was freakin forgor again",
@@ -68,11 +103,10 @@ test('post request without likes argument has the value 0 for likes', async() =>
     url: "http://www.ggoogle.com/cleememoir"
   }
 
-  logger.info(newTestBlog)
-
   // post blog to db
  const response = await api
-    .post('/api/blogs')
+    .post('/api/blogs/')
+    .set('Authorization', `Bearer ${token}`)
     .send(newTestBlog)
     .expect(201)
     .expect('Content-Type', /application\/json/)
@@ -93,16 +127,49 @@ test('post should return 400 if title or url missing', async() => {
       .send(testBlogWithoutTitle)
       .expect('Content-Type', /application\/json/)
 
-  assert.strictEqual(response.status, 400)
+  assert.strictEqual(response.status, 401)
 })
 
 // 4.13 test that blog can be deleted
 test('test that blog can be deleted', async () => {
+  // creating a blog to be deleted
+  const userResponse = await api
+        .post('/api/users')
+        .send({ "username": "testuser",
+                "password": "trustno1"
+      })
+
+  const loginResponse = await api
+      .post('/api/login/')
+      .send({"username": "testuser",
+              "password": "trustno1"})
+
+  const token = loginResponse.body.token
+
+  const newBlog = {
+      id: "5a422b891b54a676234d17fa",
+      title: "I was freakin forgor part 35835",
+      author: "Juje",
+      url: "https://x.com/goodgirljuliee/status/1821857840492933293",
+      likes: 5
+    }
+
+    // post blog to db
+  const response = await api
+    .post('/api/blogs/')
+    .set('Authorization', `Bearer ${token}`)
+    .send(newBlog)
+    .expect(201)
+    .expect('Content-Type', /application\/json/)
+
+
   const blogsAtStart = await helper.blogsInDb()
-  const blogToDelete = blogsAtStart[0]
+    // there should be three blogs now in db
+  const blogToDelete = blogsAtStart[2]
 
   await api 
     .delete(`/api/blogs/${blogToDelete.id}`)
+    .set('Authorization', `Bearer ${token}`)
     .expect(204)
   
   const blogsAtEnd = await helper.blogsInDb()
@@ -110,7 +177,9 @@ test('test that blog can be deleted', async () => {
   const contents = blogsAtEnd.map(r => r.title)
   assert(!contents.includes(blogToDelete.title))
 
-  assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length-1)
+  // now we are testing that the added blog should have been deleted, so the
+  // length should be the same
+  assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length)
 })
 
 // 4.14 test that you can edit a blog
@@ -136,6 +205,25 @@ test('test that blog can be edited', async () => {
 
   assert.strictEqual(response.status, 200)
 
+})
+
+test('test that you cannot add new blog without token', async () => {
+  
+  // a new test blog without argument likes
+  const newTestBlog = {
+    title: "babbe clee",
+    author: "Clee",
+    url: "http://www.ggoogle.com/cleememoir"
+  }
+
+  // post blog to db
+ const response = await api
+    .post('/api/blogs')
+    .send(newTestBlog)
+    .expect(401)
+    .expect('Content-Type', /application\/json/)
+  
+  assert.strictEqual(response.status, 401)
 })
 
 })

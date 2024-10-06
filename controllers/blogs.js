@@ -29,12 +29,12 @@ blogRouter.get('/:id', async (request, response) => {
 // formatted to async
 blogRouter.post('/', async (request, response, next) => {
     
-   /* const decodedToken = jwt.verify(request.token, process.env.SECRET)
-    if (!decodedToken.id) {
-      return response.status(401).json({ error: 'token invalid' })
-    }
-   //const user = await User.findById(decodedToken.id) */
    const user = request.user
+
+  if (!user) {
+    return response.status(401).json({ error: 'user not found' });
+  }
+
    const body = request.body
 
     if ((body.title || body.url) === undefined ) {
@@ -50,6 +50,8 @@ blogRouter.post('/', async (request, response, next) => {
     })
   
     const savedBlog = await blog.save()
+    await savedBlog.populate('user')
+
     user.blogs = user.blogs.concat(savedBlog._id)
     await user.save()
 
@@ -67,8 +69,10 @@ blogRouter.delete('/:id', async (request, response) => {
 
   const blog = await Blog.findById(request.params.id)
   const user = request.user
+  console.log(blog.user.toString())
+  console.log(user.toString())
 
-  if (blog.user.toString() === user.toString()) {
+  if (blog.user.toString() === user._id.toString()) {
     await Blog.findByIdAndDelete(request.params.id)
     response.status(204).end()
   }

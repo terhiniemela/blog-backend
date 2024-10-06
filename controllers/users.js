@@ -4,6 +4,7 @@ const Blog = require('../models/blog')
 const User = require('../models/user')
 const helper = require('../utils/test_helper')
 const logger = require('../utils/logger')
+const jwt = require('jsonwebtoken')
 
 usersRouter.get('/', async (request, response) => {
     const users = await User
@@ -14,7 +15,7 @@ usersRouter.get('/', async (request, response) => {
 usersRouter.post('/', async (request, response) => {
   const { username, name, password } = request.body
 
-  if ((request.body.username || request.body.password) === undefined ) {
+  if (!request.body.username || !request.body.password === undefined ) {
     return response.status(400).json({ error: 'username/password missing' })
   }
 
@@ -38,8 +39,14 @@ usersRouter.post('/', async (request, response) => {
   })
 
   const savedUser = await user.save()
-
   response.status(201).json(savedUser)
+
+  
+  usersRouter.get('/', async (request, response) => {
+    const users = await User
+      .find({}).populate('blogs')
+    response.json(users)
+  })
 })
 
 module.exports = usersRouter
