@@ -1,6 +1,8 @@
 // module for using mongoose db
 const mongoose = require('mongoose')
 
+// blog schema refers to user data
+
 const blogSchema = new mongoose.Schema({
     title: String,
     author: String,
